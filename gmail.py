@@ -11,9 +11,10 @@ from time import gmtime, strftime
 
 from pymongo import MongoClient
 
-EMAIL_ACCOUNT = "test@gmail.com"  # Gmail Account Username
-PASSWORD = "t"  # Gmail Account Password
-Attachment_DIRECTORY = 'C:/Projects/Email'  # Attachment file store path
+Imap_Server = input("Enter Imap_Server [Ex. imap.gmail.com] : ")
+EMAIL_ACCOUNT = input("Enter EmailId [Ex.test@gmail.com] : ")  # Gmail Account Username
+PASSWORD = input("Enter Password [Ex.password@123] : ")  # Gmail Account Password
+Attachment_DIRECTORY = 'D:/Email'  # Attachment file store path
 EMAIL_FOLDER = "INBOX"  # Gmail scrap folder name
 host_name = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
@@ -28,9 +29,6 @@ def process_mailbox(M):
     counter = 0
     for num in data[0].split():
         try:
-            # if counter == 100:
-            #     break
-
             # time.sleep(1)
             rv, data = M.fetch(num, '(RFC822)')
             if rv != 'OK':
@@ -44,7 +42,7 @@ def process_mailbox(M):
             local_date = ''
             if date_tuple:
                 local_date = datetime.datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
-
+            conn = ''
             try:
                 conn = MongoClient('localhost', 27017)
                 print("Connected successfully!!!")
@@ -56,6 +54,10 @@ def process_mailbox(M):
             # Created or Switched to collection names: testGmailAnup
             collection = db.testgmail
 
+            if db.testgmail.find({'email_timestamp': str(msg['Date'])}).count() > 0:
+                continue
+
+            # Attachment
             attachmenturl = ''
             emailbody = ''
             for part in msg.walk():
@@ -63,8 +65,6 @@ def process_mailbox(M):
                     # multipart/* are just containers
                     if part.get_content_maintype() == 'multipart':
                         for part in msg.walk():
-                            # each part is a either non-multipart, or another multipart message
-                            # that contains further parts... Message is organized like a tree
                             if part.get_content_type() == 'text/plain':
                                 emailbody = part.get_payload()  # prints the raw text
 
@@ -85,9 +85,58 @@ def process_mailbox(M):
                     else:
                         attachmenturl = attachmenturl + "," + Attachment_DIRECTORY + "/" + filename
                 except Exception:
-                    pass  # or you could use 'continue'
+                    continue  # or you could use 'continue'
 
-            timestamp = int(time.time())
+            timestamp = int(time.time())  # timestamp
+
+            # From if not found
+            email_sender = ''
+            email_sender_id = ''
+            try:
+                if '<' in msg['From']:
+                    email_sender = msg['From'].split('<')[0]
+                    email_sender_id = msg['From'].split('<')[1].replace(">", " ")
+                else:
+                    email_sender_id = msg['From']
+            except:
+                print("")
+
+            # To if not found
+            email_recipeint = ''
+            email_recipient_id = ''
+            try:
+                if '<' in msg['To']:
+                    email_recipeint = msg['To'].split('<')[0]
+                    email_recipient_id = msg['To'].split('<')[1].replace(">", " ")
+                else:
+                    email_recipient_id = msg['To']
+            except:
+                print("")
+
+            # CC if not found
+            email_recipeint_CC = ''
+            email_recipient_CC_id = ''
+            try:
+                if '<' in msg['Cc']:
+                    email_recipeint_CC = msg['Cc'].split('<')[0]
+                    email_recipient_CC_id = msg['Cc'].split('<')[1].replace(">", " ")
+                else:
+                    email_recipient_CC_id = msg['Cc']
+            except:
+                print("")
+
+            # CC if not found
+            email_recipeint_CCO = ''
+            email_recipient_CCO_ID = ''
+            try:
+                if '<' in msg['Bcc']:
+                    email_recipeint_CCO = msg['Bcc'].split('<')[0]
+                    email_recipient_CCO_ID = msg['Bcc'].split('<')[1].replace(">", " ")
+                else:
+                    email_recipient_CCO_ID = msg['Bcc']
+            except:
+                print("")
+
 
             emp_rec1 = {
                 "tib": "8f7074d8-a520-4f7d-b2d3-09dc36acb5fd",
@@ -97,10 +146,10 @@ def process_mailbox(M):
                 "time": timestamp,
                 "time_zone": strftime("%z", gmtime()),
                 "email_subject": subject,
-                "email_sender": msg['From'].split('<')[0],
-                "email_sender_id": msg['From'].split('<')[1].replace(">", " "),
-                "email_recipeint": "",
-                "email_recipient_id": msg['To'],
+                "email_sender": email_sender,
+                "email_sender_id": email_sender_id,
+                "email_recipeint": email_recipeint,
+                "email_recipient_id": email_recipient_id,
                 "email_timestamp": msg['Date'],
                 "email_header": "",
                 "email_body": emailbody,
@@ -110,12 +159,12 @@ def process_mailbox(M):
                 "email_eml_content": "",
                 "email_links": "",
                 "email_images": attachmenturl,
-                "email_template_id": "if we sent using any template",
-                "email_track_link": "if this email had any track link to ansewr",
-                "email_recipeint_CC": msg['Cc'],
-                "email_recipient_CC_id": "",
-                "email_recipeint_CCO": msg['Bcc'],
-                "email_recipient_CCO_ID": "",
+                "email_template_id": "",
+                "email_track_link": "",
+                "email_recipeint_CC": email_recipeint_CC,
+                "email_recipient_CC_id": email_recipient_CC_id,
+                "email_recipeint_CCO": email_recipeint_CCO,
+                "email_recipient_CCO_ID": email_recipient_CCO_ID,
                 "hash_owner_id": "g00zNU6n7WfhUI1u4A5ebxSN0732",
                 "hash_sender_id": "",
                 "hash_recipt_id": "",
@@ -123,7 +172,7 @@ def process_mailbox(M):
                 "hash_receipt_name": "",
                 "hash_recipt_CC_id": "",
                 "hash_recipt_CCO_ID": "",
-                "email_atach": "arry with all atachments and path saved",
+                "email_atach": "",
                 "hub_group_id": "da0a7b22-fb15-46e0-9f5a-019263d79e36",
                 "data_sinc": "",
                 "action": "",
@@ -142,12 +191,12 @@ def process_mailbox(M):
             print('Raw Date:', msg['Date'])
             print('From :', msg['From'].split('<')[0])
             print("")
-        except Exception  as e:
+        except Exception as e:
             print('Main Fail: ' + str(e))
-            pass  # or you could use 'continue'
+            continue  # or you could use 'continue'
 
 
-M = imaplib.IMAP4_SSL('imap.gmail.com')
+M = imaplib.IMAP4_SSL(Imap_Server)
 
 try:
     rv, data = M.login(EMAIL_ACCOUNT, PASSWORD)

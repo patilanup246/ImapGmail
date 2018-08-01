@@ -4,7 +4,6 @@ import email.header
 import imaplib
 import mimetypes
 import socket
-import sys
 import time
 import uuid
 from time import gmtime, strftime
@@ -12,6 +11,8 @@ from time import gmtime, strftime
 from pymongo import MongoClient
 
 Imap_Server = input("Enter Imap_Server [Ex. imap.gmail.com] : ")
+SSLs = input("Is SSL ?[Ex.true] : ")
+PORT = input("Enter PORT [Ex.993] : ")
 EMAIL_ACCOUNT = input("Enter EmailId [Ex.test@gmail.com] : ")  # Gmail Account Username
 PASSWORD = input("Enter Password [Ex.password@123] : ")  # Gmail Account Password
 Attachment_DIRECTORY = 'D:/Email'  # Attachment file store path
@@ -52,9 +53,9 @@ def process_mailbox(M):
             # database
             db = conn.hash
             # Created or Switched to collection names: testGmailAnup
-            collection = db.testgmail
+            collection = db.ib
 
-            if db.testgmail.find({'email_timestamp': str(msg['Date'])}).count() > 0:
+            if db.ib.find({'email_timestamp': str(msg['Date'])}).count() > 0:
                 continue
 
             # Attachment
@@ -139,47 +140,48 @@ def process_mailbox(M):
 
 
             emp_rec1 = {
-                "tib": "8f7074d8-a520-4f7d-b2d3-09dc36acb5fd",
-                "tib_name": "TPEMAIL",
-                "mail_box_name": "Frederico Gmail",
-                "id_mail_box": str(uuid.uuid1()),
-                "time": timestamp,
-                "time_zone": strftime("%z", gmtime()),
-                "email_subject": subject,
-                "email_sender": email_sender,
-                "email_sender_id": email_sender_id,
-                "email_recipeint": email_recipeint,
-                "email_recipient_id": email_recipient_id,
-                "email_timestamp": msg['Date'],
-                "email_header": "",
-                "email_body": emailbody,
-                "email_seq": "",
-                "email_text_content": "",
-                "email_html_content": "",
-                "email_eml_content": "",
-                "email_links": "",
-                "email_images": attachmenturl,
-                "email_template_id": "",
-                "email_track_link": "",
-                "email_recipeint_CC": email_recipeint_CC,
-                "email_recipient_CC_id": email_recipient_CC_id,
-                "email_recipeint_CCO": email_recipeint_CCO,
-                "email_recipient_CCO_ID": email_recipient_CCO_ID,
-                "hash_owner_id": "g00zNU6n7WfhUI1u4A5ebxSN0732",
-                "hash_sender_id": "",
-                "hash_recipt_id": "",
-                "hash_sender_name": "",
-                "hash_receipt_name": "",
-                "hash_recipt_CC_id": "",
-                "hash_recipt_CCO_ID": "",
-                "email_atach": "",
-                "hub_group_id": "da0a7b22-fb15-46e0-9f5a-019263d79e36",
-                "data_sinc": "",
-                "action": "",
-                "role": "",
-                "layout_role": "",
-                "group_id": "9529b03b-38e8-4bdc-aa62-8055a4c36a55",
-                "IP_machine": host_ip
+                "tphashobject_metadata_tib": "8f7074d8-a520-4f7d-b2d3-09dc36acb5fd",
+                "tphashobject_metadata_tib_name": "TPEMAIL",
+                "tpemail_metadata_mail_box_name": "Frederico Gmail",
+                "tpemail_metadata_id_mail_box": str(uuid.uuid1()),
+                "tpemail_metadata_time": timestamp,
+                "tpemail_metadata_time_zone": strftime("%z", gmtime()),
+                "tpemail_metadata_email_subject": subject,
+                "tpemail_metadata_email_sender": email_sender,
+                "tpemail_metadata_email_sender_id": email_sender_id,
+                "tpemail_metadata_email_recipeint": email_recipeint,
+                "tpemail_metadata_email_recipient_id": email_recipient_id,
+                "tpemail_metadata_email_timestamp": msg['Date'],
+                "tpemail_metadata_email_header": "",
+                "tpemail_metadata_email_body": emailbody,
+                "tpemail_metadata_email_seq": "",
+                "tpemail_metadata_email_text_content": "",
+                "tpemail_metadata_email_html_content": "",
+                "tpemail_metadata_email_eml_content": "",
+                "tpemail_metadata_email_links": "",
+                "tpemail_metadata_email_atach": attachmenturl,
+                "tpemail_metadata_email_template_id": "",
+                "tpemail_metadata_email_track_link": "",
+                "tpemail_metadata_email_recipeint_cc": email_recipeint_CC,
+                "tpemail_metadata_email_recipient_cc_id": email_recipient_CC_id,
+                "tpemail_metadata_email_recipeint_cco": email_recipeint_CCO,
+                "tpemail_metadata_email_recipient_cco_id": email_recipient_CCO_ID,
+                "tphashobject_metadata_hash_owner_id": "g00zNU6n7WfhUI1u4A5ebxSN0732",
+                "tpemail_metadata_hash_sender_id": "",
+                "tpemail_metadata_hash_recipt_id": "",
+                "tpemail_metadata_hash_sender_name": "",
+                "tpemail_metadata_hash_receipt_name": "",
+                "tpemail_metadata_hash_recipt_cc_id": "",
+                "tpemail_metadata_hash_recipt_cco_id": "",
+
+                "tphashobject_metadata_hub_group_id": "da0a7b22-fb15-46e0-9f5a-019263d79e36",
+                "tphashobject_metadata_data_sinc_mongodb": "",
+                "tphashobject_metadata_action": "",
+                "tphashobject_metadata_role": "",
+                "tphashobject_metadata_layout_role": "",
+                "tphashobject_metadata_group_id": "9529b03b-38e8-4bdc-aa62-8055a4c36a55",
+                "tpemailbox_metadata_IP_machine": host_ip
+
             }
             # Insert Data
             rec_id1 = collection.insert_one(emp_rec1)
@@ -196,26 +198,27 @@ def process_mailbox(M):
             continue  # or you could use 'continue'
 
 
-M = imaplib.IMAP4_SSL(Imap_Server)
-
 try:
+    if SSLs:
+        M = imaplib.IMAP4_SSL(Imap_Server, PORT)
+    else:
+        M = imaplib.IMAP4_SSL(Imap_Server)
     rv, data = M.login(EMAIL_ACCOUNT, PASSWORD)
-except imaplib.IMAP4.error:
-    print("LOGIN FAILED!!! ")
-    sys.exit(1)
+    print(rv, data)
 
-print(rv, data)
+    rv, mailboxes = M.list()
+    if rv == 'OK':
+        print("Mailboxes:")
 
-rv, mailboxes = M.list()
-if rv == 'OK':
-    print("Mailboxes:")
+    rv, data = M.select(EMAIL_FOLDER)
+    if rv == 'OK':
+        print("Processing mailbox...\n")
+        process_mailbox(M)
+        M.close()
+    else:
+        print("ERROR: Unable to open mailbox ", rv)
 
-rv, data = M.select(EMAIL_FOLDER)
-if rv == 'OK':
-    print("Processing mailbox...\n")
-    process_mailbox(M)
-    M.close()
-else:
-    print("ERROR: Unable to open mailbox ", rv)
-
-M.logout()
+    M.logout()
+except Exception as e:
+    print("LOGIN FAILED!!! :" + str(e))
+    # sys.exit(1)
